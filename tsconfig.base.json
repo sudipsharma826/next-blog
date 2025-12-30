@@ -1,0 +1,12 @@
+//common tsconfig settings, other tsconfig files extend this
+//here the path mappings for shared packages are defined , using path aliases we donnot need to install the packages locally in each project
+//using path aliases also helps to avoid issues with multiple versions of the same package, but this is for the development phase only.In production build, the pacakges should be install via package manager ( npm)
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@shared/types": ["packages/shared/types/src"],
+      "@shared/utils": ["packages/shared/utils/src"],
+    }
+  }
+}
