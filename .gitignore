@@ -1,0 +1,64 @@
+# Node modules
+/node_modules
+**/node_modules
+
+# Build output
+/dist
+/build
+**/dist
+**/build
+**/.next
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+lerna-debug.log*
+
+# OS files
+.DS_Store
+
+# Test coverage
+/coverage
+/.nyc_output
+**/coverage
+**/.nyc_output
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# dotenv environment variable files
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Temp directories
+.temp
+.tmp
+**/.temp
+**/.tmp
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
