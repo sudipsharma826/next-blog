@@ -38,8 +38,13 @@ This project is a monorepo containing a full-stack blog application with the fol
  npm run dev ( To run frontend and backend concurrently)
  npm run dev:frontend ( to run frontend only)
  npm run dev:backend( To run backend only)
+ ```
 ## Notes
 - Each package has its own ESLint and Prettier config for flexibility.
 - Make sure to use branches for new features or deployments.
 
----
+## Documentation
+
+- [Authentication Flow](docs/authentication.md)
+
+
