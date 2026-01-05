@@ -32,7 +32,7 @@ export class AuthService {
 
   async login(authDto: AuthDto) {
     const { name, email, password, provider, emailVerified, image, ipAddress, userAgent } = authDto;
-    console.log('Auth DTO:', authDto);
+    // console.log('Auth DTO:', authDto); // Remove or comment out debug log in production
     const sessionContext = { ipAddress, userAgent };
     if (!email || !provider) {
       throw new BadRequestException('Invalid login data');
@@ -368,7 +368,7 @@ export class AuthService {
     const decoded = (await this.jwtService.verifyToken(refreshToken)) as Partial<JwtPayload>;
     const sid = typeof decoded.sid === 'string' ? decoded.sid : undefined;
     const gtv = typeof decoded.gtv === 'number' ? decoded.gtv : undefined;
-    console.log('SessionId:', sid, 'GTV:', gtv);
+    //console.log('SessionId:', sid, 'GTV:', gtv);
     if (!sid || gtv === undefined || gtv === null)
       throw new BadRequestException('Session ID and GTV required');
     // to logout the sid must be there in the database
@@ -387,7 +387,7 @@ export class AuthService {
     const decoded = (await this.jwtService.verifyToken(refreshToken)) as Partial<JwtPayload>;
     const userId = typeof decoded.userId === 'string' ? decoded.userId : undefined;
     const gtv = typeof decoded.gtv === 'number' ? decoded.gtv : undefined;
-    console.log('UserId:', userId, 'GTV:', gtv);
+    //console.log('UserId:', userId, 'GTV:', gtv);
     if (!userId || gtv == null || gtv === undefined)
       throw new BadRequestException('User ID and GTV required');
     const userGtv = await this.redisService.get(`user:${userId}:gtv`);
@@ -410,7 +410,7 @@ export class AuthService {
     const sid = typeof decoded.sid === 'string' ? decoded.sid : undefined;
     const gtv = typeof decoded.gtv === 'number' ? decoded.gtv : undefined;
     const userId = typeof decoded.userId === 'string' ? decoded.userId : undefined;
-    console.log('Decoded refresh token:', decoded);
+    //console.log('Decoded refresh token:', decoded);
     if (!sid || gtv === undefined || gtv === null || !userId) {
       throw new BadRequestException('Invalid token payload');
     }
@@ -447,7 +447,7 @@ export class AuthService {
       where: { id: session.id },
       data: { refreshToken: newRefreshTokenHash, updatedAt: new Date() },
     });
-    console.log('Token and session refreshed successfully for user:', user.email);
+    //console.log('Token and session refreshed successfully for user:', user.email);
     return {
       status: 200,
       message: 'Tokens refreshed',

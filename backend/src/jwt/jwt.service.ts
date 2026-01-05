@@ -17,7 +17,7 @@ export class JwtService {
     this.isProduction = this.config.get<boolean>('isProduction') || false;
   }
   generateUserToken(payload: UserInfoPayload): string {
-    console.log(`👤 User token created for ${payload.user.email}`);
+    //console.log(`👤 User token created for ${payload.user.email}`);
     return this.jwt.sign(
       { user: payload },
       {
@@ -27,7 +27,7 @@ export class JwtService {
   }
 
   generateAccessToken(payload: JwtPayload): string {
-    console.log(`🔑 Access token created for ${payload.email}`);
+    //console.log(`🔑 Access token created for ${payload.email}`);
     //set iat and exp for acessToken
     // payload.iat = Math.floor(Date.now() / 1000);
     // payload.exp = payload.iat + 15 * 60; // 15 minutes
@@ -37,7 +37,7 @@ export class JwtService {
   }
 
   generateRefreshToken(payload: JwtPayload): string {
-    console.log(`🔁 Refresh token created for ${payload.email}`);
+    //console.log(`🔁 Refresh token created for ${payload.email}`);
     //set iat and exp for acessToken
     // payload.iat = Math.floor(Date.now() / 1000);
     // payload.exp = payload.iat + 7 * 24 * 60 * 60; // 7 days
@@ -47,13 +47,13 @@ export class JwtService {
   }
 
   generateEmailToken(payload: { id: string; email: string }) {
-    console.log(`📩 Email verification token created for ${payload.email}`);
+    //console.log(`📩 Email verification token created for ${payload.email}`);
     return this.jwt.sign(payload, {
       expiresIn: '5m',
     });
   }
   generateResetPasswordToken(payload: { iat: number; email: string }) {
-    console.log(`📩 Email verification token created for ${payload.email}`);
+    //console.log(`📩 Email verification token created for ${payload.email}`);
     return this.jwt.sign(payload, {
       expiresIn: '5m',
     });
@@ -78,7 +78,7 @@ export class JwtService {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    console.log('🍪 Auth cookies set successfully');
+    //console.log('🍪 Auth cookies set successfully');
     return;
   }
 
@@ -101,7 +101,7 @@ export class JwtService {
   async verifyToken(token: string) {
     try {
       const result: AuthRequestUser = await this.jwt.verifyAsync(token);
-      // console.log("Result of token verification:", result);
+      // //console.log("Result of token verification:", result);
       return result;
     } catch {
       throw new BadRequestException('Invalid token');

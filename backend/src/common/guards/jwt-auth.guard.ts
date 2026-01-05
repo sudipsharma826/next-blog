@@ -54,7 +54,7 @@ export class AlreadyAuthenticatedGuard implements CanActivate {
     const res = context.switchToHttp().getResponse<Response>();
     // If user is already authenticated, block access and redirect
     if (req?.user) {
-      console.log('User is already authenticated:', req.user);
+      //console.log('User is already authenticated:', req.user);
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
       const redirectUrl = `${frontendUrl}/?status=403&message=${encodeURIComponent('You are already logged in. Cannot access this page')}`;
       res.redirect(redirectUrl);

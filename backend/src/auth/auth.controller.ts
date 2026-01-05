@@ -329,7 +329,7 @@ export class AuthController {
   @Get('verifyemail')
   async verifyEmail(@Query('token') token: string) {
     try {
-      console.log('Verifying email with token:', token);
+      // console.log('Verifying email with token:', token);
       const result = await this.authService.verifyEmail(token);
       if (result && typeof result === 'object' && 'status' in result && 'message' in result) {
         return {

@@ -12,10 +12,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogIn, UserCircle, ChevronDown, LogOut, LayoutDashboard, Sun, Moon } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { LogIn, UserCircle, ChevronDown, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuthActions } from '@/lib/logic/auth';
-import { X,Menu} from 'lucide-react';
+import { X,Menu,Sun,Moon} from 'lucide-react';
 
 const NAV_LINKS = [
   { href: '/', label: 'Home' },
@@ -24,12 +23,12 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const { singleSessionLogout } = useAuthActions();
-  const { theme, setTheme } = useTheme();
   const { user } = useUserStore();
     const [logoutLoading, setLogoutLoading] = useState(false);
     const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState('light');
 
   useEffect(() => {
     setMounted(true);
@@ -45,25 +44,25 @@ export default function Navbar() {
     if (loading) {
       return <NavbarSkeleton />;
     }
-    if (user) {
-      return (
-        <>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Toggle theme"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          >
-            {mounted ? (
-              theme === 'dark' ? (
-                <Sun className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )
+    return (
+      <>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Toggle theme"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        >
+          {mounted ? (
+            theme === 'dark' ? (
+              <Sun className="w-5 h-5" />
             ) : (
-              <span className="w-5 h-5" />
-            )}
-          </Button>
+              <Moon className="w-5 h-5" />
+            )
+          ) : (
+            <span className="w-5 h-5" />
+          )}
+        </Button>
+        {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 px-3 py-1 rounded-full">
@@ -115,23 +114,22 @@ export default function Navbar() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </>
-      );
-    }
-    return (
-      <Button
-        asChild
-        className="rounded-lg bg-primary dark:bg-primary-dark hover:bg-primary/90 dark:hover:bg-primary-dark/90 transition"
-      >
-        <Link
-          href="/login"
-          className="flex items-center gap-2 font-bold"
-          style={{ color: '#fff' }}
-        >
-          <LogIn className="w-5 h-5" style={{ color: '#fff' }} />
-          Login
-        </Link>
-      </Button>
+        ) : (
+          <Button
+            asChild
+            className="rounded-lg bg-primary dark:bg-primary-dark hover:bg-primary/90 dark:hover:bg-primary-dark/90 transition"
+          >
+            <Link
+              href="/login"
+              className="flex items-center gap-2 font-bold"
+              style={{ color: '#fff' }}
+            >
+              <LogIn className="w-5 h-5" style={{ color: '#fff' }} />
+              Login
+            </Link>
+          </Button>
+        )}
+      </>
     );
   };
 

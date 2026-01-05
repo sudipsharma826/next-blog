@@ -25,7 +25,7 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
     profile: GithubProfile,
     done: VerifyCallback,
   ): void {
-    // console.log('GitHub profile:', profile);
+    //console.log('GitHub profile:', profile);
     const { displayName, emails, photos, username } = profile;
     const primaryEmail = emails?.[0]?.value;
     const hasEmail = Boolean(primaryEmail);

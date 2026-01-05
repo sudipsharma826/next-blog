@@ -73,13 +73,13 @@ export class RedisService implements OnModuleDestroy, OnModuleInit {
   // Called when the module initializes
   async onModuleInit() {
     if (await this.isHealthy()) {
-      console.log('[Redis] Health check passed on startup');
+      //console.log('[Redis] Health check passed on startup');
     }
   }
 
   // Disconnect Redis gracefully on app shutdown
   onModuleDestroy() {
     this.redis.disconnect();
-    console.log('[Redis] Disconnected on app shutdown');
+    //console.log('[Redis] Disconnected on app shutdown');
   }
 }

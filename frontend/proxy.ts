@@ -4,7 +4,7 @@ import { redirectTo } from '@workspace/shared-utils';
 // List of auth pages to protect
 const AUTH_PAGES = ['/login', '/forgotpassword', '/verifyemail'];
 
-export function proxy(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const redirect = redirectTo(request);
   const { pathname } = request.nextUrl;
   // Only run on auth pages
