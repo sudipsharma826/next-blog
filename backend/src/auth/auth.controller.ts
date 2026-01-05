@@ -74,6 +74,12 @@ export class AuthController {
   @UseGuards(RedisPrismaGuard)
   async googleAuthCallback(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     try {
+      if (!req.user) {
+        res.redirect(
+          `${this.FRONTEND_URL}/?status=400&message=${encodeURIComponent('No user found in request')}`,
+        );
+        return;
+      }
       const userFromStrategy = req.user;
       const context = {
         ipAddress: this.extractClientIp(req),
@@ -121,6 +127,12 @@ export class AuthController {
   @UseGuards(RedisPrismaGuard)
   async githubAuthCallback(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     try {
+      if (!req.user) {
+        res.redirect(
+          `${this.FRONTEND_URL}/?status=400&message=${encodeURIComponent('No user found in request')}`,
+        );
+        return;
+      }
       const userFromStrategy = req.user;
       const context = {
         ipAddress: this.extractClientIp(req),

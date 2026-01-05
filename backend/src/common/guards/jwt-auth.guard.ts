@@ -1,7 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { AuthRequestUser } from '@workspace/shared-types';
 import { Request, Response } from 'express';
 
 @Injectable()
@@ -38,7 +37,7 @@ export class ProcteGuard implements CanActivate {
     }
 
     try {
-      const user: AuthRequestUser = await this.jwtService.verifyAsync(accessToken);
+      const user = await this.jwtService.verifyAsync(accessToken);
       if (!user || typeof user !== 'object') {
         throw new BadRequestException('Invalid access token payload');
       }

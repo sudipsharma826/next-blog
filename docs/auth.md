@@ -196,4 +196,8 @@ Controller Usage
 
 ### Added the Suspense as a fallback system to show the skeleton ui in the page unitll it get it reuired data from the zustand , or the paged get mounted. and in nvbar also apply the skeleton in place of the user infor show as zustand take 1 oe 2 secound of time to send the user data to show , so instead to show login btn which mislead the user , we show the skeleton.
 
+### Added the global.d.ts to make a User type of Prisma for the req.user.
+### Add th postinstall prisma generate in backend package.json ( to fixed the generated file error of Prisma)
+
+### Fixed: Donnt make the devDependices packages in root package.json (only shared packages only), install types of the cookie parser , all passort packages types
 
