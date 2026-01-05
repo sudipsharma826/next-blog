@@ -8,6 +8,7 @@ import { JwtService as NestJwtService } from '@nestjs/jwt';
 @Injectable()
 export class JwtService {
   private readonly isProduction: boolean;
+  private readonly production_main_url: string;
 
   constructor(
     private readonly jwt: NestJwtService,
@@ -15,7 +16,9 @@ export class JwtService {
     private readonly config: ConfigService,
   ) {
     this.isProduction = this.config.get<boolean>('isProduction') as boolean;
-    if(!this.isProduction){
+    this.production_main_url = this.config.get<string>('PRODUCTION_MAIN_URL') as string;
+    console.log(`⚙️ JWT Service initialized in ${this.isProduction ? 'production' : 'development'} mode`);
+    if(!this.isProduction || !this.production_main_url){
      throw new Error('isProduction config is not set properly');
     }
   }
@@ -68,6 +71,9 @@ export class JwtService {
       httpOnly: true,
       sameSite: this.isProduction ? 'none' : 'lax',
       secure: this.isProduction,
+      domain: this.isProduction
+        ? this.production_main_url
+        : undefined,
       path: '/',
     };
 
