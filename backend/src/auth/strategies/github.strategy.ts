@@ -3,6 +3,8 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, Profile as GithubProfile } from 'passport-github2';
 import { VerifyCallback } from 'passport-oauth2';
 import { ConfigService } from '@nestjs/config';
+import { AuthDto } from '../auth.dto';
+
 
 @Injectable()
 export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
@@ -24,14 +26,13 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
     done: VerifyCallback,
   ): void {
     // console.log('GitHub profile:', profile);
-    const { id, displayName, emails, photos, username } = profile;
+    const { displayName, emails, photos, username } = profile;
     const primaryEmail = emails?.[0]?.value;
     const hasEmail = Boolean(primaryEmail);
-    const user = {
+    const user :AuthDto = {
       provider: 'Github',
-      providerId: id,
       name: displayName || username,
-      email: primaryEmail,
+      email: primaryEmail || '',
       image: photos?.[0]?.value,
       emailVerified: hasEmail, // github doesnot provide the verifired key and value
     };

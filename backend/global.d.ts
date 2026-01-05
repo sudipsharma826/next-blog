@@ -4,7 +4,7 @@ import { User as PrismaUser} from "./generated/prisma/client"
 import { AuthDto } from "./src/auth/auth.dto";
 declare global {
   namespace Express {
-    interface User extends PrismaUser,AuthDto {}
+    interface User extends AuthDto {}
     interface Request {
       user?: User;
     }
