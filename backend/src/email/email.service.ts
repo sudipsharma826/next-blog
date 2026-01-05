@@ -4,35 +4,39 @@ import { Resend } from 'resend';
 
 @Injectable()
 export class EmailService {
-	private readonly resend: Resend;
+  private readonly resend: Resend;
 
-	constructor(private readonly configService: ConfigService) {
-		const apiKey = this.configService.get<string>('RESEND_API_KEY');
-        if(!apiKey){
-            throw new Error('RESEND_API_KEY is not defined in environment variables');
-        }
-		this.resend = new Resend(apiKey);
-	}
+  constructor(private readonly configService: ConfigService) {
+    const apiKey = this.configService.get<string>('RESEND_API_KEY');
+    if (!apiKey) {
+      throw new Error('RESEND_API_KEY is not defined in environment variables');
+    }
+    this.resend = new Resend(apiKey);
+  }
 
-	// Generic method to send an email (single or multiple recipients)
-	async sendEmail(to: string | string[], subject: string, html: string) {
-		const recipients = Array.isArray(to) ? to : [to];
-		const response = await this.resend.emails.send({
-			from: 'TechKnows | Technology & Programming Blogs<info@sudipsharma.com.np>',
-			to: recipients,
-			subject,
-			html,
-		});
-		// Check for error in response (Resend returns { error } on failure)
-		if (response.error) {
-			throw new Error(`Failed to send email: ${response.error.message || response.error}`);
-		}
-		return response;
-	}
+  // Generic method to send an email (single or multiple recipients)
+  async sendEmail(to: string | string[], subject: string, html: string) {
+    const recipients = Array.isArray(to) ? to : [to];
+    const response = await this.resend.emails.send({
+      from: 'TechKnows | Technology & Programming Blogs<info@sudipsharma.com.np>',
+      to: recipients,
+      subject,
+      html,
+    });
+    // Check for error in response (Resend returns { error } on failure)
+    if (response.error) {
+      const errorMsg =
+        typeof response.error?.message === 'string'
+          ? response.error.message
+          : JSON.stringify(response.error);
+      throw new Error(`Failed to send email: ${errorMsg}`);
+    }
+    return response;
+  }
 
-	// Onboarding Email Template
-	private onboardingTemplate(userEmail: string, loginTime: string, ipAddress?: string) {
-		return `
+  // Onboarding Email Template
+  private onboardingTemplate(userEmail: string, loginTime: string, ipAddress?: string) {
+    return `
 			<div style="font-family: Arial, sans-serif;">
 				<h2>Login Alert</h2>
 				<p>Hello,</p>
@@ -41,11 +45,11 @@ export class EmailService {
 				<p>Thank you,<br/>Your Team</p>
 			</div>
 		`;
-	}
+  }
 
-	// Forgot Password (OTP) Email Template
-	private forgotPasswordTemplate(userEmail: string, otp: string) {
-		return `
+  // Forgot Password (OTP) Email Template
+  private forgotPasswordTemplate(userEmail: string, otp: string) {
+    return `
 			<div style="font-family: Arial, sans-serif;">
 				<h2>Password Reset Request</h2>
 				<p>Hello,</p>
@@ -57,11 +61,11 @@ export class EmailService {
 				<p>Thank you,<br/>Your Team</p>
 			</div>
 		`;
-	}
+  }
 
-	// Verification Email Link Template
-	private verificationEmailTemplate(userEmail: string, verifyLink: string) {
-		return `
+  // Verification Email Link Template
+  private verificationEmailTemplate(userEmail: string, verifyLink: string) {
+    return `
 			<div style="font-family: Arial, sans-serif;">
 				<h2>Email Verification</h2>
 				<p>Hello,</p>
@@ -73,26 +77,26 @@ export class EmailService {
 				<p>Thank you,<br/>Your Team</p>
 			</div>
 		`;
-	}
+  }
 
-	// Send Onboarding/Login Alert Email
-	async sendOnboardingEmail(to: string | string[], loginTime: string, ipAddress?: string) {
-		const subject = 'Login Alert - Your Account';
-		const html = this.onboardingTemplate(Array.isArray(to) ? to[0] : to, loginTime, ipAddress);
-		return this.sendEmail(to, subject, html);
-	}
+  // Send Onboarding/Login Alert Email
+  async sendOnboardingEmail(to: string | string[], loginTime: string, ipAddress?: string) {
+    const subject = 'Login Alert - Your Account';
+    const html = this.onboardingTemplate(Array.isArray(to) ? to[0] : to, loginTime, ipAddress);
+    return this.sendEmail(to, subject, html);
+  }
 
-	// Send Forgot Password Email (with OTP)
-	async sendForgotPasswordEmail(to: string | string[], otp: string) {
-		const subject = 'Password Reset Request';
-		const html = this.forgotPasswordTemplate(Array.isArray(to) ? to[0] : to, otp);
-		return this.sendEmail(to, subject, html);
-	}
+  // Send Forgot Password Email (with OTP)
+  async sendForgotPasswordEmail(to: string | string[], otp: string) {
+    const subject = 'Password Reset Request';
+    const html = this.forgotPasswordTemplate(Array.isArray(to) ? to[0] : to, otp);
+    return this.sendEmail(to, subject, html);
+  }
 
-	// Send Verification Email Link
-	async sendVerificationEmail(to: string | string[], verifyLink: string) {
-		const subject = 'Verify Your Email Address';
-		const html = this.verificationEmailTemplate(Array.isArray(to) ? to[0] : to, verifyLink);
-		return this.sendEmail(to, subject, html);
-	}
+  // Send Verification Email Link
+  async sendVerificationEmail(to: string | string[], verifyLink: string) {
+    const subject = 'Verify Your Email Address';
+    const html = this.verificationEmailTemplate(Array.isArray(to) ? to[0] : to, verifyLink);
+    return this.sendEmail(to, subject, html);
+  }
 }

@@ -1,19 +1,24 @@
 /**
  * RedisService
- * 
+ *
  * Use Case:
  * 1. Store user global token version for quick access and validation.
  *    Key format: `user:{userId}:gtv`
  * 2. Can be extended to store any cache or session data.
  */
 
-import { Injectable, ServiceUnavailableException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  ServiceUnavailableException,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
 @Injectable()
 export class RedisService implements OnModuleDestroy, OnModuleInit {
-  private readonly redis:Redis;
+  private readonly redis: Redis;
 
   constructor(private readonly config: ConfigService) {
     const redisUrl = this.config.get<string>('REDIS_URL') ?? 'redis://localhost:6379';
@@ -26,7 +31,9 @@ export class RedisService implements OnModuleDestroy, OnModuleInit {
     this.redis.on('ready', () => console.log('[Redis] Ready'));
     this.redis.on('error', (err) => console.error('[Redis] Error:', err));
     this.redis.on('close', () => console.log('[Redis] Connection closed'));
-    this.redis.on('reconnecting', (delay:number) => console.log(`[Redis] Reconnecting in ${delay}ms`));
+    this.redis.on('reconnecting', (delay: number) =>
+      console.log(`[Redis] Reconnecting in ${delay}ms`),
+    );
     this.redis.on('end', () => console.log('[Redis] Connection ended'));
   }
 
@@ -58,7 +65,7 @@ export class RedisService implements OnModuleDestroy, OnModuleInit {
     try {
       const result = await this.redis.ping();
       return result === 'PONG';
-    } catch (error) {
+    } catch {
       throw new ServiceUnavailableException('[Redis] Redis is not available');
     }
   }

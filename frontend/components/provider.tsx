@@ -1,5 +1,3 @@
-
-
 import { ThemeProvider } from 'next-themes';
 import React from 'react';
 import { Toaster } from 'sonner';
@@ -11,7 +9,8 @@ interface ProvidersProps {
 export default function Providers({ children }: ProvidersProps) {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <Toaster position="top-center" richColors closeButton theme="system" />
+      <Toaster position="top-right" richColors closeButton theme="system" />
+
       {children}
     </ThemeProvider>
   );

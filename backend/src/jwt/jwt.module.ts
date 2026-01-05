@@ -8,10 +8,11 @@ import { RedisModule } from '../redis/redis.module';
   imports: [
     RedisModule,
     ConfigModule,
-    NestJwtModule.registerAsync({ // using registerAsync to inject ConfigService we donnt need to explicitly set secrets any in token genrate and verification , JWT Module auto set the secret from env
+    NestJwtModule.registerAsync({
+      // using registerAsync to inject ConfigService we donnt need to explicitly set secrets any in token genrate and verification , JWT Module auto set the secret from env
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('SECRET_KEY'),
       }),
     }),

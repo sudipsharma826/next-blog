@@ -33,7 +33,6 @@
 - Auth flow, routes, and test cases documented in `auth.md`.
 - All recent changes and implementation details summarized here for future reference.
 
----
 
 ## Auth Route Workflows (Detailed Steps)
 
@@ -131,4 +130,70 @@
    - Set cookies for new tokens.
    - Return user info and tokens.
 
----
+
+## Frontend Integration & Auth Flow
+### Redirect Handling After Login(in ouath google and github)
+In Google and Github from fronted it should be directly redirect ,not tot use fetch or axiso otherise you get CORS erros and in th resposne also redirect to home page with the parms like status,message and the user include token in url,
+When a user is prompted to log in, capture the original requested URL and redirect them to /login?redirect=${encodeURIComponent(router.asPath)}.
+After successful login, extract the redirect parameter from the search params and navigate the user to the intended page, passing status and message.
+On the redirect page, display status and message using a toast notification in the user dashboard.
+This ensures users return to their intended page after login, not always the homepage, and receive clear feedback.
+
+## Redirect & Toast Rules
+For actions requiring a redirect, send status and message as URL parameters and use a centralized ToastClick handler.
+For actions not requiring a redirect, use the toastHandler directly.
+
+### Centralized API Client
+All API requests are routed through a central apiClient for consistency.
+
+### Error Handling
+
+### Status codes:
+200: Success
+201: Info/Warning
+400, 403, 404, 500: Error (local, user, or system)
+401: Access token expired
+NestJS error objects used:
+BadRequestException (DTO validation, invalid input) – 400
+ForbiddenException (role-based, permission denied) – 403
+NotFoundException (missing routes) – 404
+ConflictException (duplicate record, DB) – 409
+InternalServerErrorException (system failure) – 500
+Missing keys/config issues – 500
+Native JS errors (bugs) – 500
+Custom error object (AccessTokenRevalidate) – 401
+Status 200/201 are returned manually, not as error messages.
+
+## Global Error Filter
+Implemented a global error filter in NestJS for consistent error codes and frontend handling.
+
+## JWT Guard
+Created a JWT guard to check access and refresh tokens, revalidate access tokens, and save user info to req.user.
+Use @UseGuards(...) on protected routes (not public routes).
+
+### Additional Implementations
+Global error filters, CORS, custom error objects, JWT guards for protected routes.
+Form handling with react-hook-form, error handling, full auth system integration, and email verification.
+User data is securely encoded; frontend decodes with jose and saves to Zustand store.
+
+### Server Actions
+Implemented hooks for server actions: login, logout, forgot password.
+
+### 404 Handling
+Implemented not-found.tsx to handle 404 errors, using toast notifications for errors that redirects cannot handle.
+
+### Route Protection (proxy.ts)
+
+After login, users cannot revisit auth pages.
+Restricts access to controller routes if already logged in.
+Do not block API routes in Next.js middleware; always enforce API security in the backend.
+Use frontend middleware and UI logic for user experience only.
+For route access restrictions, use guards only on routes requiring access, not on callback routes.
+Example: AlreadyAuthenticatedGuard implemented.
+Controller Usage
+
+### Do not force use of res or req objects unless necessary in the controller In Nestjs.
+
+### Added the Suspense as a fallback system to show the skeleton ui in the page unitll it get it reuired data from the zustand , or the paged get mounted. and in nvbar also apply the skeleton in place of the user infor show as zustand take 1 oe 2 secound of time to send the user data to show , so instead to show login btn which mislead the user , we show the skeleton.
+
+

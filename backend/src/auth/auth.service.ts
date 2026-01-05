@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthDto } from './auth.dto';
 import * as bcrypt from 'bcryptjs';
 import { ConfigService } from '@nestjs/config';
@@ -7,7 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '../jwt/jwt.service';
 import { RedisService } from '../redis/redis.service';
 import { EmailService } from '../email/email.service';
-import { JwtPayload, UserDataFromDB } from '@workspace/shared-types';
+import { JwtPayload, UserDataFromDB, UserInfoPayload } from '@workspace/shared-types';
 
 @Injectable()
 export class AuthService {
@@ -27,7 +32,7 @@ export class AuthService {
 
   async login(authDto: AuthDto) {
     const { name, email, password, provider, emailVerified, image, ipAddress, userAgent } = authDto;
-    // console.log('Auth DTO:', authDto);
+    console.log('Auth DTO:', authDto);
     const sessionContext = { ipAddress, userAgent };
     if (!email || !provider) {
       throw new BadRequestException('Invalid login data');
@@ -98,12 +103,14 @@ export class AuthService {
           // Not verified: send verification email, do NOT generate tokens/session
           const existingToken = await this.redisService.get(`verify:email:${user.email}`);
           if (existingToken) {
-            throw new BadRequestException('Verification email already sent. Please wait before requesting again.');
+            throw new BadRequestException(
+              'Verification email already sent. Please wait before requesting again.',
+            );
           }
           const token = this.jwtService.generateEmailToken({ id: user.id, email: user.email });
           const tokenHash = await bcrypt.hash(token, 10);
           await this.redisService.set(`verify:email:${user.email}`, tokenHash, 300); // 5 min
-          const verifyLink = `${this.FRONTEND_URL}/verifyLink?token=${token}`;
+          const verifyLink = `${this.FRONTEND_URL}/verifyemail?token=${token}`;
           await this.emailService.sendVerificationEmail(user.email, verifyLink);
           return {
             status: 200,
@@ -135,13 +142,15 @@ export class AuthService {
           // Not verified: generate verification token, store hash in Redis, send email
           const existingToken = await this.redisService.get(`verify:email:${user.email}`);
           if (existingToken) {
-            throw new BadRequestException('Verification email already sent. Please wait before requesting again.');
+            throw new BadRequestException(
+              'Verification email already sent. Please wait before requesting again.',
+            );
           }
           const token = this.jwtService.generateEmailToken({ id: user.id, email: user.email });
           const tokenHash = await bcrypt.hash(token, 10);
           await this.redisService.set(`verify:email:${user.email}`, tokenHash, 300); // 5 min
-          const verifyLink = `${this.FRONTEND_URL}/verifyLink?token=${token}`;
-          try{
+          const verifyLink = `${this.FRONTEND_URL}/verifyemail?token=${token}`;
+          try {
             await this.emailService.sendVerificationEmail(user.email, verifyLink);
           } catch (error) {
             console.error('Error sending verification email:', error);
@@ -173,12 +182,14 @@ export class AuthService {
           // Not verified: send verification email, do NOT generate tokens/session
           const existingToken = await this.redisService.get(`verify:email:${user.email}`);
           if (existingToken) {
-            throw new BadRequestException('Verification email already sent. Please wait before requesting again.');
+            throw new BadRequestException(
+              'Verification email already sent. Please wait before requesting again.',
+            );
           }
           const token = this.jwtService.generateEmailToken({ id: user.id, email: user.email });
           const tokenHash = await bcrypt.hash(token, 10);
           await this.redisService.set(`verify:email:${user.email}`, tokenHash, 300);
-          const verifyLink = `${this.FRONTEND_URL}/verifyLink?token=${token}`;
+          const verifyLink = `${this.FRONTEND_URL}/verifyemail?token=${token}`;
           await this.emailService.sendVerificationEmail(user.email, verifyLink);
           return { status: 200, message: 'Verification email sent. Please verify your email.' };
         }
@@ -197,12 +208,14 @@ export class AuthService {
         });
         const existingToken = await this.redisService.get(`verify:email:${user.email}`);
         if (existingToken) {
-          throw new BadRequestException('Verification email already sent. Please wait before requesting again.');
+          throw new BadRequestException(
+            'Verification email already sent. Please wait before requesting again.',
+          );
         }
         const token = this.jwtService.generateEmailToken({ id: user.id, email: user.email });
         const tokenHash = await bcrypt.hash(token, 10);
         await this.redisService.set(`verify:email:${user.email}`, tokenHash, 300);
-        const verifyLink = `${this.FRONTEND_URL}/verifyLink?token=${token}`;
+        const verifyLink = `${this.FRONTEND_URL}/verifyemail?token=${token}`;
         await this.emailService.sendVerificationEmail(user.email, verifyLink);
         return { status: 200, message: 'Verification email sent. Please verify your email.' };
       }
@@ -211,7 +224,7 @@ export class AuthService {
 
   async createSessionAndTokens(
     user: UserDataFromDB,
-    context?: { ipAddress?: string | null; userAgent?: string | null }
+    context?: { ipAddress?: string | null; userAgent?: string | null },
   ) {
     // Create session
     const session = await this.prisma.session.create({
@@ -247,6 +260,17 @@ export class AuthService {
     if (!existingGtv) {
       await this.redisService.set(gtvKey, String(user.globalTokenVersion));
     }
+    // user info saved in token to send to frontend in the url
+    const userInfo = {
+      user: {
+        email: user.email,
+        name: user.name,
+        image: user.image,
+        roles: user.roles,
+        emailVerified: user.emailVerified,
+      },
+    };
+    const userToken = await this.jwtService.generateUserToken(userInfo as UserInfoPayload);
     // Set cookies in the auth controller
     return {
       status: 200,
@@ -261,13 +285,14 @@ export class AuthService {
         roles: user.roles,
         emailVerified: user.emailVerified,
       },
+      userToken,
     };
   }
   //forgot password step 1
   async forgotPassword(email: string) {
     if (!email) throw new BadRequestException('Email is required');
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user){
+    if (!user) {
       throw new NotFoundException('User with this email does not exist');
     }
     // Rate limit: check if OTP already exists in Redis
@@ -287,28 +312,32 @@ export class AuthService {
   //forgot password step 2
   async verifyOtp(email: string, otp: string) {
     if (!email || !otp) throw new BadRequestException('Email and OTP are required');
-    const otpHash: string | null = await this.redisService.get(`fp:otp:${email}`);
+    const otpHash = await this.redisService.get(`fp:otp:${email}`);
     if (!otpHash || !(await bcrypt.compare(otp, otpHash))) {
       throw new BadRequestException('Invalid or expired OTP');
     }
     // Generate reset token (JWT, expires in 5 min)
-    const token = this.jwtService.generateResetPasswordToken({ email, iat: Math.floor(Date.now() / 1000) });
+    const token = this.jwtService.generateResetPasswordToken({
+      email,
+      iat: Math.floor(Date.now() / 1000),
+    });
     const tokenHash = await bcrypt.hash(token, 10);
     await this.redisService.set(`fp:token:${email}`, tokenHash, 300); // 5 min
     // Remove OTP after use
     await this.redisService.set(`fp:otp:${email}`, '', 1);
-    return { status: 200, token, message: 'OTP verified',resetToken: token  };
+    return { status: 200, token, message: 'OTP verified', resetToken: token };
   }
 
   //forgot password step 3
   async resetPassword(token: string, password: string) {
     if (!token || !password) throw new BadRequestException('Token and new password are required');
-    const decoded: { iat: number; email: string } = await this.jwtService.verifyToken(token);
+    const decoded = (await this.jwtService.verifyToken(token)) as { iat: number; email: string };
     const email = decoded.email;
     // check iat
-    const iat= decoded.iat;
+    const iat = decoded.iat;
     const now = Math.floor(Date.now() / 1000);
-    if (now - iat > 6 * 60) { //6 min for the buffer, but actual expiry is 5 min
+    if (now - iat > 6 * 60) {
+      //6 min for the buffer, but actual expiry is 5 min
       throw new BadRequestException('Token has expired');
     }
     if (!email) throw new BadRequestException('Invalid token payload');
@@ -320,7 +349,10 @@ export class AuthService {
     if (!user) throw new BadRequestException('User not found');
     // Update password
     const hashedPassword = await bcrypt.hash(password, 10);
-    await this.prisma.user.update({ where: { email }, data: { password: hashedPassword, globalTokenVersion: { increment: 1 } } });
+    await this.prisma.user.update({
+      where: { email },
+      data: { password: hashedPassword, globalTokenVersion: { increment: 1 } },
+    });
     // Update GTV in Redis
     await this.redisService.set(`user:${user.id}:gtv`, String((user.globalTokenVersion || 0) + 1));
     // Delete all sessions for user
@@ -333,16 +365,18 @@ export class AuthService {
   //logout single session
   async logout(refreshToken: string) {
     if (!refreshToken) throw new BadRequestException('Refresh token required');
-    const decoded = await this.jwtService.verifyToken(refreshToken);
-    const sid = decoded.sid;
-    const gtv = decoded.gtv;
-      console.log("SessionId:", sid, "GTV:", gtv);
-      if (!sid || gtv === undefined || gtv === null) throw new BadRequestException('Session ID and GTV required');
+    const decoded = (await this.jwtService.verifyToken(refreshToken)) as Partial<JwtPayload>;
+    const sid = typeof decoded.sid === 'string' ? decoded.sid : undefined;
+    const gtv = typeof decoded.gtv === 'number' ? decoded.gtv : undefined;
+    console.log('SessionId:', sid, 'GTV:', gtv);
+    if (!sid || gtv === undefined || gtv === null)
+      throw new BadRequestException('Session ID and GTV required');
     // to logout the sid must be there in the database
     const session = await this.prisma.session.findUnique({ where: { id: sid } });
     if (!session) throw new BadRequestException('Session not found');
     const userGtv = await this.redisService.get(`user:${session.userId}:gtv`);
-    if (userGtv && Number(userGtv) !== gtv) throw new UnauthorizedException('Token version mismatch');
+    if (userGtv && Number(userGtv) !== gtv)
+      throw new UnauthorizedException('Token version mismatch');
     await this.prisma.session.delete({ where: { id: sid } });
     return { status: 200, message: 'Logged out successfully' };
   }
@@ -350,15 +384,20 @@ export class AuthService {
   //logout all sessions
   async logoutAll(refreshToken: string) {
     if (!refreshToken) throw new BadRequestException('Refresh token required');
-    const decoded = await this.jwtService.verifyToken(refreshToken);
-    const userId = decoded.userId;
-    const gtv = decoded.gtv;
-    console.log("UserId:", userId, "GTV:", gtv);
-    if (!userId || gtv == null || gtv === undefined) throw new BadRequestException('User ID and GTV required');
+    const decoded = (await this.jwtService.verifyToken(refreshToken)) as Partial<JwtPayload>;
+    const userId = typeof decoded.userId === 'string' ? decoded.userId : undefined;
+    const gtv = typeof decoded.gtv === 'number' ? decoded.gtv : undefined;
+    console.log('UserId:', userId, 'GTV:', gtv);
+    if (!userId || gtv == null || gtv === undefined)
+      throw new BadRequestException('User ID and GTV required');
     const userGtv = await this.redisService.get(`user:${userId}:gtv`);
-    if (userGtv && Number(userGtv) !== gtv) throw new UnauthorizedException('Token version mismatch');
+    if (userGtv && Number(userGtv) !== gtv)
+      throw new UnauthorizedException('Token version mismatch');
     // Increment GTV in DB and Redis
-    const user = await this.prisma.user.update({ where: { id: userId }, data: { globalTokenVersion: { increment: 1 } } });
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { globalTokenVersion: { increment: 1 } },
+    });
     await this.redisService.set(`user:${userId}:gtv`, String(user.globalTokenVersion));
     // Delete all sessions
     await this.prisma.session.deleteMany({ where: { userId } });
@@ -367,9 +406,11 @@ export class AuthService {
 
   async refreshTokens(refreshToken: string) {
     if (!refreshToken) throw new BadRequestException('Refresh token required');
-    const decoded = await this.jwtService.verifyToken(refreshToken);
-    const { sid, gtv, userId } = decoded;
-    console.log("Decoded refresh token:", decoded);
+    const decoded = (await this.jwtService.verifyToken(refreshToken)) as Partial<JwtPayload>;
+    const sid = typeof decoded.sid === 'string' ? decoded.sid : undefined;
+    const gtv = typeof decoded.gtv === 'number' ? decoded.gtv : undefined;
+    const userId = typeof decoded.userId === 'string' ? decoded.userId : undefined;
+    console.log('Decoded refresh token:', decoded);
     if (!sid || gtv === undefined || gtv === null || !userId) {
       throw new BadRequestException('Invalid token payload');
     }
@@ -379,7 +420,7 @@ export class AuthService {
       throw new UnauthorizedException('Global token version mismatch');
     }
     // Validate session and user
-    const session = await this.prisma.session.findUnique({ where: { id: sid ,userId} });
+    const session = await this.prisma.session.findUnique({ where: { id: sid, userId } });
     if (!session) {
       throw new UnauthorizedException('Session or user not found');
     }
@@ -406,12 +447,43 @@ export class AuthService {
       where: { id: session.id },
       data: { refreshToken: newRefreshTokenHash, updatedAt: new Date() },
     });
-    console.log("Token and session refreshed successfully for user:", user.email);
+    console.log('Token and session refreshed successfully for user:', user.email);
     return {
       status: 200,
       message: 'Tokens refreshed',
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
     };
+  }
+  // Email verification endpoint logic
+  async verifyEmail(token: string) {
+    if (!token) throw new BadRequestException('Verification token required');
+    // Decode token (should contain user id and email)
+    let decoded: Partial<JwtPayload>;
+    try {
+      decoded = (await this.jwtService.verifyToken(token)) as Partial<JwtPayload>;
+    } catch {
+      throw new BadRequestException('Invalid or expired token');
+    }
+    const userId = typeof decoded.userId === 'string' ? decoded.userId : undefined;
+    const email = typeof decoded.email === 'string' ? decoded.email : undefined;
+    if (!userId || !email) throw new BadRequestException('Invalid token payload');
+    // Get token hash from Redis
+    const tokenHash = await this.redisService.get(`verify:email:${email}`);
+    if (!tokenHash || !(await bcrypt.compare(token, tokenHash))) {
+      throw new BadRequestException('Invalid or expired token');
+    }
+    // Set emailVerified true in DB
+    const user = await this.prisma.user.update({
+      where: { id: userId, email },
+      data: { emailVerified: true },
+    });
+    // If no user updated, throw error
+    if (!user) {
+      throw new BadRequestException('User not found or email mismatch');
+    }
+    // Remove token from Redis
+    await this.redisService.set(`verify:email:${email}`, '', 1);
+    return { status: 200, message: 'Email verification successful.' };
   }
 }

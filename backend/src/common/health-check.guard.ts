@@ -1,4 +1,11 @@
-import { CanActivate, ExecutionContext, Injectable, ServiceUnavailableException, Inject, Optional } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  ServiceUnavailableException,
+  Inject,
+  Optional,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
 

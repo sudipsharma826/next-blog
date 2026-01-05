@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import Providers  from '../components/provider';
+import Providers from '../components/provider';
 import LenisScroll from '../components/lenis-scroll';
 import Navbar from '@/components/Navbar';
-import Footer  from '@/components/Footer';
+import Footer from '@/components/Footer';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -18,7 +18,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'TechKnows - Technology & Programming Blog',
-  description: 'Explore the latest in technology and programming with TechKnows. Stay updated with tutorials, reviews, and insights from industry experts.',
+  description:
+    'Explore the latest in technology and programming with TechKnows. Stay updated with tutorials, reviews, and insights from industry experts.',
 };
 
 export default function RootLayout({
@@ -36,7 +37,7 @@ export default function RootLayout({
         <Providers>
           <Navbar />
           {children}
-          <Footer/>
+          <Footer />
         </Providers>
       </body>
     </html>
