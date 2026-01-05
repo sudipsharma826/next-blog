@@ -9,9 +9,9 @@ export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   // Only run on auth pages
   if (AUTH_PAGES.some((page) => pathname.startsWith(page))) {
-    const accessToken = request.cookies.get('accessToken')?.value;
     const refreshToken = request.cookies.get('refreshToken')?.value;
-    if (accessToken || refreshToken) {
+    console.log('Auth page access attempt. Refresh Token:', refreshToken);
+    if (refreshToken) {
       // User is logged in, redirect to previous page or home
       const redirectUrl = redirect || '/';
       const redirectUrlWithParams = new URL(redirectUrl, request.url);
