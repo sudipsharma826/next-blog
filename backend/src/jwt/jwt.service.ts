@@ -14,7 +14,10 @@ export class JwtService {
     private readonly redis: RedisService,
     private readonly config: ConfigService,
   ) {
-    this.isProduction = this.config.get<boolean>('isProduction') || false;
+    this.isProduction = this.config.get<boolean>('isProduction') as boolean;
+    if(!this.isProduction){
+     throw new Error('isProduction config is not set properly');
+    }
   }
   generateUserToken(payload: UserInfoPayload): string {
     //console.log(`👤 User token created for ${payload.user.email}`);

@@ -106,10 +106,13 @@ export default function Navbar() {
               <DropdownMenuItem
                 className="flex items-center gap-2"
                 onClick={async () => {
+                  if (logoutLoading) return;
                   setLogoutLoading(true);
                   await singleSessionLogout();
                   setLogoutLoading(false);
                 }}
+                disabled={logoutLoading}
+                style={logoutLoading ? { opacity: 0.6, pointerEvents: 'none' } : {}}
               >
                 <LogOut className="w-4 h-4 mr-2" /> {logoutLoading ? 'Logging out...' : 'Logout'}
               </DropdownMenuItem>
