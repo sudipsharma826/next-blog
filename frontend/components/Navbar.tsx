@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import NavbarSkeleton from '@/components/skeletons/NavbarSkeleton';
 import { useUserStore } from '../lib/store/userStore';
 import Link from 'next/link';
@@ -14,7 +14,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { LogIn, UserCircle, ChevronDown, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuthActions } from '@/lib/logic/auth';
-import { X,Menu,Sun,Moon} from 'lucide-react';
+import { X, Menu, Sun, Moon } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 const NAV_LINKS = [
   { href: '/', label: 'Home' },
@@ -28,7 +29,7 @@ export default function Navbar() {
     const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState('light');
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
@@ -59,7 +60,7 @@ export default function Navbar() {
               <Moon className="w-5 h-5" />
             )
           ) : (
-            <span className="w-5 h-5" />
+            <Moon className="w-5 h-5" />
           )}
         </Button>
         {user ? (
