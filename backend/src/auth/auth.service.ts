@@ -7,7 +7,7 @@ import {
 import { AuthDto } from './auth.dto';
 import * as bcrypt from 'bcryptjs';
 import { ConfigService } from '@nestjs/config';
-import { AuthProvider } from '../../generated/prisma/enums';
+import { AuthProvider } from '@workspace/shared-types';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '../jwt/jwt.service';
 import { RedisService } from '../redis/redis.service';
@@ -24,7 +24,7 @@ export class AuthService {
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
   ) {
-    this.FRONTEND_URL = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+  this.FRONTEND_URL = this.configService.get<string>('LOCAL_URL') || 'http://localhost:3000';
     if (!this.FRONTEND_URL) {
       throw new Error('FRONTEND_URL is not defined in environment variables');
     }
@@ -32,10 +32,11 @@ export class AuthService {
 
   async login(authDto: AuthDto) {
     const { name, email, password, provider, emailVerified, image, ipAddress, userAgent } = authDto;
-    console.log('Auth DTO:', authDto);
+    // console.log('Auth DTO:', authDto); // Remove or comment out debug log in production
     const sessionContext = { ipAddress, userAgent };
     if (!email || !provider) {
-      throw new BadRequestException('Invalid login data');
+      console.log('[Login] Missing email or provider:', { email, provider });
+      throw new BadRequestException('Login failed. Please check your credentials and try again.');
     }
 
     let user = await this.prisma.user.findUnique({
@@ -290,14 +291,19 @@ export class AuthService {
   }
   //forgot password step 1
   async forgotPassword(email: string) {
-    if (!email) throw new BadRequestException('Email is required');
+    if (!email) {
+      console.log('[ForgotPassword] Email is required');
+      throw new BadRequestException('Please enter your email address.');
+    }
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
-      throw new NotFoundException('User with this email does not exist');
+      console.log('[ForgotPassword] User not found for email:', email);
+      throw new NotFoundException('No account found with this email.');
     }
     // Rate limit: check if OTP already exists in Redis
     const existingOtp = await this.redisService.get(`fp:otp:${email}`);
     if (existingOtp) {
+      console.log('[ForgotPassword] OTP already sent for email:', email);
       throw new BadRequestException('OTP already sent. Please wait before requesting again.');
     }
     // Generate 6-digit OTP
@@ -311,10 +317,14 @@ export class AuthService {
 
   //forgot password step 2
   async verifyOtp(email: string, otp: string) {
-    if (!email || !otp) throw new BadRequestException('Email and OTP are required');
+    if (!email || !otp) {
+      console.log('[VerifyOtp] Email or OTP missing:', { email, otp });
+      throw new BadRequestException('Please enter your email and OTP.');
+    }
     const otpHash = await this.redisService.get(`fp:otp:${email}`);
     if (!otpHash || !(await bcrypt.compare(otp, otpHash))) {
-      throw new BadRequestException('Invalid or expired OTP');
+      console.log('[VerifyOtp] Invalid or expired OTP for email:', email);
+      throw new BadRequestException('Invalid or expired OTP. Please try again.');
     }
     // Generate reset token (JWT, expires in 5 min)
     const token = this.jwtService.generateResetPasswordToken({
@@ -330,7 +340,10 @@ export class AuthService {
 
   //forgot password step 3
   async resetPassword(token: string, password: string) {
-    if (!token || !password) throw new BadRequestException('Token and new password are required');
+    if (!token || !password) {
+      console.log('[ResetPassword] Token or password missing:', { token, password });
+      throw new BadRequestException('Password reset failed. Please try again.');
+    }
     const decoded = (await this.jwtService.verifyToken(token)) as { iat: number; email: string };
     const email = decoded.email;
     // check iat
@@ -338,15 +351,23 @@ export class AuthService {
     const now = Math.floor(Date.now() / 1000);
     if (now - iat > 6 * 60) {
       //6 min for the buffer, but actual expiry is 5 min
-      throw new BadRequestException('Token has expired');
+      console.log('[ResetPassword] Token expired:', { iat, now });
+      throw new BadRequestException('Password reset token has expired.');
     }
-    if (!email) throw new BadRequestException('Invalid token payload');
+    if (!email) {
+      console.log('[ResetPassword] Invalid token payload:', decoded);
+      throw new BadRequestException('Password reset failed. Please try again.');
+    }
     const tokenHash: string | null = await this.redisService.get(`fp:token:${email}`);
     if (!tokenHash || !(await bcrypt.compare(token, tokenHash))) {
-      throw new BadRequestException('Invalid or expired token');
+      console.log('[ResetPassword] Invalid or expired token for email:', email);
+      throw new BadRequestException('Password reset failed. Please try again.');
     }
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) throw new BadRequestException('User not found');
+    if (!user) {
+      console.log('[ResetPassword] User not found for email:', email);
+      throw new BadRequestException('No account found with this email.');
+    }
     // Update password
     const hashedPassword = await bcrypt.hash(password, 10);
     await this.prisma.user.update({
@@ -364,35 +385,52 @@ export class AuthService {
 
   //logout single session
   async logout(refreshToken: string) {
-    if (!refreshToken) throw new BadRequestException('Refresh token required');
+    if (!refreshToken){
+      console.log('[Logout] No refresh token provided for logout');
+      throw new BadRequestException('Logout failed. Please try again.'); // user-friendly message
+    }
     const decoded = (await this.jwtService.verifyToken(refreshToken)) as Partial<JwtPayload>;
     const sid = typeof decoded.sid === 'string' ? decoded.sid : undefined;
     const gtv = typeof decoded.gtv === 'number' ? decoded.gtv : undefined;
-    console.log('SessionId:', sid, 'GTV:', gtv);
-    if (!sid || gtv === undefined || gtv === null)
-      throw new BadRequestException('Session ID and GTV required');
+    //console.log('SessionId:', sid, 'GTV:', gtv);
+    if (!sid || gtv === undefined || gtv === null){
+      console.log('[Logout] Missing session ID or GTV:', { sid, gtv });
+      throw new BadRequestException('Logout failed. Please try again.');
+    }
     // to logout the sid must be there in the database
     const session = await this.prisma.session.findUnique({ where: { id: sid } });
-    if (!session) throw new BadRequestException('Session not found');
+    if (!session) {
+      console.log('[Logout] Session not found for sid:', sid);
+      throw new BadRequestException('Logout failed. Please try again.');
+    }
     const userGtv = await this.redisService.get(`user:${session.userId}:gtv`);
-    if (userGtv && Number(userGtv) !== gtv)
-      throw new UnauthorizedException('Token version mismatch');
+    if (userGtv && Number(userGtv) !== gtv){
+      console.log('[Logout] Global token version mismatch:', { userGtv, gtv });
+      throw new UnauthorizedException('Logout failed. Please try again.');
+    }
     await this.prisma.session.delete({ where: { id: sid } });
     return { status: 200, message: 'Logged out successfully' };
   }
 
   //logout all sessions
   async logoutAll(refreshToken: string) {
-    if (!refreshToken) throw new BadRequestException('Refresh token required');
+    if (!refreshToken) {
+      console.log('[LogoutAll] No refresh token provided');
+      throw new BadRequestException('Logout failed. Please try again.');
+    }
     const decoded = (await this.jwtService.verifyToken(refreshToken)) as Partial<JwtPayload>;
     const userId = typeof decoded.userId === 'string' ? decoded.userId : undefined;
     const gtv = typeof decoded.gtv === 'number' ? decoded.gtv : undefined;
-    console.log('UserId:', userId, 'GTV:', gtv);
-    if (!userId || gtv == null || gtv === undefined)
-      throw new BadRequestException('User ID and GTV required');
+    //console.log('UserId:', userId, 'GTV:', gtv);
+    if (!userId || gtv == null || gtv === undefined){
+      console.log('[LogoutAll] Missing userId or GTV:', { userId, gtv });
+      throw new BadRequestException('Logout failed. Please try again.');
+    }
     const userGtv = await this.redisService.get(`user:${userId}:gtv`);
-    if (userGtv && Number(userGtv) !== gtv)
-      throw new UnauthorizedException('Token version mismatch');
+    if (userGtv && Number(userGtv) !== gtv){
+      console.log('[LogoutAll] Token version mismatch:', { userGtv, gtv });
+      throw new UnauthorizedException('Logout failed. Please try again.');
+    }
     // Increment GTV in DB and Redis
     const user = await this.prisma.user.update({
       where: { id: userId },
@@ -405,32 +443,42 @@ export class AuthService {
   }
 
   async refreshTokens(refreshToken: string) {
-    if (!refreshToken) throw new BadRequestException('Refresh token required');
+    if (!refreshToken) {
+      console.log('[RefreshTokens] No refresh token provided');
+      throw new BadRequestException('Session expired. Please login again.');
+    }
     const decoded = (await this.jwtService.verifyToken(refreshToken)) as Partial<JwtPayload>;
     const sid = typeof decoded.sid === 'string' ? decoded.sid : undefined;
     const gtv = typeof decoded.gtv === 'number' ? decoded.gtv : undefined;
     const userId = typeof decoded.userId === 'string' ? decoded.userId : undefined;
-    console.log('Decoded refresh token:', decoded);
+    //console.log('Decoded refresh token:', decoded);
     if (!sid || gtv === undefined || gtv === null || !userId) {
-      throw new BadRequestException('Invalid token payload');
+      console.log('[RefreshTokens] Invalid token payload:', { sid, gtv, userId });
+      throw new BadRequestException('Session expired. Please login again.');
     }
     // Check GTV in Redis
     const redisGtv = await this.redisService.get(`user:${userId}:gtv`);
     if (!redisGtv || Number(redisGtv) !== gtv) {
-      throw new UnauthorizedException('Global token version mismatch');
+      console.log('[RefreshTokens] Global token version mismatch:', { redisGtv, gtv });
+      throw new UnauthorizedException('Session expired. Please login again.');
     }
     // Validate session and user
     const session = await this.prisma.session.findUnique({ where: { id: sid, userId } });
     if (!session) {
-      throw new UnauthorizedException('Session or user not found');
+      console.log('[RefreshTokens] Session or user not found:', { sid, userId });
+      throw new UnauthorizedException('Session expired. Please login again.');
     }
     // Compare refresh token hash
     if (!session.refreshToken || !(await bcrypt.compare(refreshToken, session.refreshToken))) {
-      throw new UnauthorizedException('Refresh token reuse detected');
+      console.log('[RefreshTokens] Refresh token reuse detected:', { sid, userId });
+      throw new UnauthorizedException('Session expired. Please login again.');
     }
     // Generate new tokens
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new UnauthorizedException('User not found');
+    if (!user) {
+      console.log('[RefreshTokens] User not found:', { userId });
+      throw new UnauthorizedException('Session expired. Please login again.');
+    }
     const payload = {
       userId: user.id,
       email: user.email,
@@ -447,7 +495,7 @@ export class AuthService {
       where: { id: session.id },
       data: { refreshToken: newRefreshTokenHash, updatedAt: new Date() },
     });
-    console.log('Token and session refreshed successfully for user:', user.email);
+    //console.log('Token and session refreshed successfully for user:', user.email);
     return {
       status: 200,
       message: 'Tokens refreshed',
@@ -457,21 +505,29 @@ export class AuthService {
   }
   // Email verification endpoint logic
   async verifyEmail(token: string) {
-    if (!token) throw new BadRequestException('Verification token required');
+    if (!token) {
+      console.log('[VerifyEmail] No verification token provided');
+      throw new BadRequestException('Email verification failed. Please try again.');
+    }
     // Decode token (should contain user id and email)
     let decoded: Partial<JwtPayload>;
     try {
       decoded = (await this.jwtService.verifyToken(token)) as Partial<JwtPayload>;
-    } catch {
-      throw new BadRequestException('Invalid or expired token');
+    } catch (error) {
+      console.log('[VerifyEmail] Invalid or expired token:', error);
+      throw new BadRequestException('Email verification failed. Please try again.');
     }
     const userId = typeof decoded.userId === 'string' ? decoded.userId : undefined;
     const email = typeof decoded.email === 'string' ? decoded.email : undefined;
-    if (!userId || !email) throw new BadRequestException('Invalid token payload');
+    if (!userId || !email) {
+      console.log('[VerifyEmail] Invalid token payload:', { userId, email });
+      throw new BadRequestException('Email verification failed. Please try again.');
+    }
     // Get token hash from Redis
     const tokenHash = await this.redisService.get(`verify:email:${email}`);
     if (!tokenHash || !(await bcrypt.compare(token, tokenHash))) {
-      throw new BadRequestException('Invalid or expired token');
+      console.log('[VerifyEmail] Invalid or expired token for email:', email);
+      throw new BadRequestException('Email verification failed. Please try again.');
     }
     // Set emailVerified true in DB
     const user = await this.prisma.user.update({
@@ -480,7 +536,8 @@ export class AuthService {
     });
     // If no user updated, throw error
     if (!user) {
-      throw new BadRequestException('User not found or email mismatch');
+      console.log('[VerifyEmail] User not found or email mismatch:', { userId, email });
+      throw new BadRequestException('Email verification failed. Please try again.');
     }
     // Remove token from Redis
     await this.redisService.set(`verify:email:${email}`, '', 1);

@@ -23,7 +23,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       await this.$connect();
     } catch (err) {
       console.error('❌ Prisma connection failed:', err);
-      throw new ServiceUnavailableException('Database connection failed');
+      throw new ServiceUnavailableException('Service Not Available');
     }
   }
 
@@ -41,7 +41,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       await this.$queryRaw`SELECT 1`;
     } catch (err) {
       console.error('❌ Prisma health check failed:', err);
-      throw new ServiceUnavailableException('Database is unavailable');
+      throw new ServiceUnavailableException('Service Not Available');
     }
   }
 }

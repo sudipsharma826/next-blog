@@ -28,6 +28,18 @@ export function Login() {
     mode: 'onTouched',
   });
 
+  // Always use window.location.href for OAuth login
+  const handleGoogleLogin = () => {
+    if (loading) return;
+    setLoading('google');
+    window.location.href = googleRedirectUrl as string;
+  };
+  const handleGithubLogin = () => {
+    if (loading) return;
+    setLoading('github');
+    window.location.href = githubRedirectUrl as string;
+  };
+
   return (
     <>
       <ToastClick />
@@ -43,11 +55,8 @@ export function Login() {
             //   await oauthLogin('google');
             //   setLoading(null);
             // }}
-            onClick={() => {
-              if (loading) return;
-              setLoading('google');
-              window.location.href = googleRedirectUrl as string;
-            }}
+            onClick={handleGoogleLogin}
+
           >
             <FaGoogle className="w-5 h-5 text-primary dark:text-primary-dark" />
             {loading === 'google' ? 'Signing in with Google...' : 'Continue with Google'}
@@ -61,11 +70,7 @@ export function Login() {
             //   await oauthLogin('github');
             //   setLoading(null);
             // }}
-            onClick={() => {
-              if (loading) return;
-              setLoading('github');
-              window.location.href = githubRedirectUrl as string;
-            }}
+            onClick={handleGithubLogin}
           >
             <Github className="w-5 h-5 text-primary dark:text-primary-dark" />
             {loading === 'github' ? 'Signing in with GitHub...' : 'Continue with GitHub'}

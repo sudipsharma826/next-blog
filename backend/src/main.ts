@@ -9,11 +9,10 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') || 5000;
   const localUrl = configService.get<string>('LOCAL_URL');
-  const productionUrl = configService.get<string>('PRODUCTION_URL');
 
   // Enable CORS for Next.js frontend
   app.enableCors({
-    origin: [localUrl, productionUrl],
+    origin: localUrl,
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

@@ -62,3 +62,10 @@ export interface AuthRequestUser{
     iat?: number;
 
 }
+export const AuthProvider = {
+  Google: 'Google',
+  Github: 'Github',
+  Credentials: 'Credentials'
+} as const
+
+export type AuthProvider = (typeof AuthProvider)[keyof typeof AuthProvider]

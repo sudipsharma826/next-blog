@@ -28,7 +28,8 @@ export class HealthCheckGuard implements CanActivate {
       try {
         await this.prismaService.isHealthy();
       } catch {
-        throw new ServiceUnavailableException('Database is not available');
+        throw new ServiceUnavailableException('Service Not Available');
+        console.log('Data Base not connected');
       }
     }
     // Redis check
@@ -36,7 +37,8 @@ export class HealthCheckGuard implements CanActivate {
       try {
         await this.redisService.isHealthy?.();
       } catch {
-        throw new ServiceUnavailableException('Redis is not available');
+        throw new ServiceUnavailableException('Service Not Available');
+        console.log('Redis not connected');
       }
     }
     return true;

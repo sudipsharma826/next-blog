@@ -17,7 +17,7 @@ export class AuthController {
     private readonly jwt: JwtService,
     private readonly configService: ConfigService,
   ) {
-    this.FRONTEND_URL = this.configService.get<string>('FRONTEND_URL') || '';
+    this.FRONTEND_URL = this.configService.get<string>('LOCAL_URL') || '';
     if (!this.FRONTEND_URL) {
       throw new Error('FRONTEND_URL is not defined in environment variables');
     }
@@ -74,6 +74,12 @@ export class AuthController {
   @UseGuards(RedisPrismaGuard)
   async googleAuthCallback(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     try {
+      if (!req.user) {
+        res.redirect(
+          `${this.FRONTEND_URL}/?status=400&message=${encodeURIComponent('No user found in request')}`,
+        );
+        return;
+      }
       const userFromStrategy = req.user;
       const context = {
         ipAddress: this.extractClientIp(req),
@@ -121,6 +127,12 @@ export class AuthController {
   @UseGuards(RedisPrismaGuard)
   async githubAuthCallback(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     try {
+      if (!req.user) {
+        res.redirect(
+          `${this.FRONTEND_URL}/?status=400&message=${encodeURIComponent('No user found in request')}`,
+        );
+        return;
+      }
       const userFromStrategy = req.user;
       const context = {
         ipAddress: this.extractClientIp(req),
@@ -205,7 +217,7 @@ export class AuthController {
   @Post('resetpassword')
   async resetPassword(@Body() body: { password: string }, @Req() req: Request) {
     try {
-      const resetToken = typeof req.cookies?.resetToken === 'string' ? req.cookies.resetToken : '';
+      const resetToken = req.cookies?.resetToken;
       return await this.authService.resetPassword(resetToken, body.password);
     } catch (error: unknown) {
       let status = 400;
@@ -223,12 +235,14 @@ export class AuthController {
   @Post('logout')
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     try {
-      const refreshToken =
-        typeof req.cookies?.refreshToken === 'string' ? req.cookies.refreshToken : '';
+      const refreshToken = req.cookies?.refreshToken;
+      const acessToken = req.cookies?.accessToken ;
       const result = await this.authService.logout(refreshToken);
       if (result && typeof result.status === 'number' && result.status === 200) {
-        res.clearCookie('accessToken');
-        res.clearCookie('refreshToken');
+        await this.jwt.clearAuthCookies(res, 'refreshToken');
+        if(acessToken){
+          await this.jwt.clearAuthCookies(res, 'accessToken');
+        }
       }
       return result;
     } catch (error) {
@@ -249,11 +263,15 @@ export class AuthController {
   @Post('logoutall')
   async logoutAll(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     try {
-      const refreshToken =
-        typeof req.cookies?.refreshToken === 'string' ? req.cookies.refreshToken : '';
+      const refreshToken = req.cookies?.refreshToken;
+      const acessToken = req.cookies?.accessToken ;
       const result = await this.authService.logoutAll(refreshToken);
-      res.clearCookie('accessToken');
-      res.clearCookie('refreshToken');
+      if (result && typeof result.status === 'number' && result.status === 200) {
+        await this.jwt.clearAuthCookies(res, 'accessToken');
+        if(acessToken){
+        await this.jwt.clearAuthCookies(res, 'refreshToken');
+        }
+      }
       return result;
     } catch (error) {
       let status = 400;
@@ -273,10 +291,9 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ status: number; message: string; user?: any } | void> {
     try {
-      const refreshToken =
-        typeof req.cookies?.refreshToken === 'string' ? req.cookies.refreshToken : '';
+      const refreshToken = req.cookies?.refreshToken;
       const result = await this.authService.refreshTokens(refreshToken);
-      if (result && 'accessToken' in result && 'refreshToken' in result) {
+      if (result && 'accessToken' in result && 'refreshToken' in result) { 
         await this.jwt.setAuthCookies(res, result.accessToken, result.refreshToken);
         return {
           status: result.status,
@@ -317,7 +334,7 @@ export class AuthController {
   @Get('verifyemail')
   async verifyEmail(@Query('token') token: string) {
     try {
-      console.log('Verifying email with token:', token);
+      // console.log('Verifying email with token:', token);
       const result = await this.authService.verifyEmail(token);
       if (result && typeof result === 'object' && 'status' in result && 'message' in result) {
         return {

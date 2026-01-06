@@ -64,6 +64,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       message = exception.message;
     }
 
+    // Check if headersSent is available and true before sending a response
+    if ('headersSent' in response && response.headersSent) return;
     response.status(status).json({
       status,
       message,

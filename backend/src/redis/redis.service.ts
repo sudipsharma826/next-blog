@@ -40,7 +40,8 @@ export class RedisService implements OnModuleDestroy, OnModuleInit {
   // Optional: check Redis connection status
   private ensureReady() {
     if (this.redis.status !== 'ready') {
-      throw new ServiceUnavailableException('[Redis] Redis is not ready');
+      console.log('[Redis] Redis is not ready');
+      throw new ServiceUnavailableException('Service Not Available');
     }
   }
 
@@ -66,20 +67,21 @@ export class RedisService implements OnModuleDestroy, OnModuleInit {
       const result = await this.redis.ping();
       return result === 'PONG';
     } catch {
-      throw new ServiceUnavailableException('[Redis] Redis is not available');
+      console.log('[Redis] Health check failed');
+      throw new ServiceUnavailableException('Service Not Available');
     }
   }
 
   // Called when the module initializes
   async onModuleInit() {
     if (await this.isHealthy()) {
-      console.log('[Redis] Health check passed on startup');
+      //console.log('[Redis] Health check passed on startup');
     }
   }
 
   // Disconnect Redis gracefully on app shutdown
   onModuleDestroy() {
     this.redis.disconnect();
-    console.log('[Redis] Disconnected on app shutdown');
+    //console.log('[Redis] Disconnected on app shutdown');
   }
 }

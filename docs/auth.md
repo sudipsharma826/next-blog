@@ -196,4 +196,33 @@ Controller Usage
 
 ### Added the Suspense as a fallback system to show the skeleton ui in the page unitll it get it reuired data from the zustand , or the paged get mounted. and in nvbar also apply the skeleton in place of the user infor show as zustand take 1 oe 2 secound of time to send the user data to show , so instead to show login btn which mislead the user , we show the skeleton.
 
+### Added the global.d.ts to make a User type of Prisma for the req.user.
+### Add th postinstall prisma generate in backend package.json ( to fixed the generated file error of Prisma)
+
+### Fixed: Donnt make the devDependices packages in root package.json (only shared packages only), install types of the cookie parser , all passort packages types.
+
+
+### Production Problem Faced:
+## Token not be set : the solution of that problem is :Set the Same Parent Domain For both Frontend and backend
+Reason:
+Cookies set for a parent domain (e.g., .sudipsharma.com.np) are accessible to all subdomains.
+This allows authentication to work across frontend and backend, enabling secure login and logout.
+
+If domains are different:
+Cookies cannot be shared, and authentication will break
+
+## Add Domain Option is Cookie Option :
+Reason:
+By default, cookies are only accessible to the domain that set them.
+Setting domain: '.sudipsharma.com.np' allows all subdomains to access the cookie, enabling cross-subdomain authentication.
+
+Without domain:
+Only the backend subdomain can access the cookie, and the frontend cannot use it for authentication.
+
+### IMP : In development donot set the domain cookie Options , otherise the the cookies that were been set or clear form cookies will not . Becasue: Browsers do not allow setting cookies with a domain that does not match the current host.
+## Solution is that : set condition that isProduction ture and the production_main_url(parent domain ) is present , if present then set the domain , otherwise not .
+
+
+
+
 

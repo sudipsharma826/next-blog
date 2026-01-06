@@ -14,5 +14,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["src", "test"]
+  "include": ["src", "test", "global.d.ts"],
+  "exclude": ["node_modules", "dist"]
 }

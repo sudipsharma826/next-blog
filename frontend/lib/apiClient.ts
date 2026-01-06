@@ -24,7 +24,7 @@ export async function apiRequest(
   let response: Response;
   let data: ApiResponse;
   try {
-    console.log(`API Request to ${endpoint} with options:`, defaultOptions, baseUrl);
+    //console.log(`API Request to ${endpoint} with options:`, defaultOptions, baseUrl);
     response = await fetch(`${baseUrl}${endpoint}`, defaultOptions);
     if (!response.ok) {
       let message = response.statusText || 'Request failed';
@@ -55,11 +55,11 @@ export async function apiRequest(
     };
   }
 
-  console.log(`API Request to ${endpoint} responded with:`, data);
+  //console.log(`API Request to ${endpoint} responded with:`, data);
 
   // If access token expired (401)
   if (data.status === 401 && data.message !== 'Refresh token not found') {
-    console.log('🔄 Access token expired, refreshing token...');
+    //console.log('🔄 Access token expired, refreshing token...');
 
     try {
       // Call refresh endpoint

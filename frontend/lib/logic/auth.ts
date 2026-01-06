@@ -7,7 +7,7 @@ import { redirectTo } from '@workspace/shared-utils';
 
 export function useAuthActions() {
   const router = useRouter();
-
+  const { setUser, clearUser, user } = useUserStore();
   async function emailPasswordLogin(email: string, password: string) {
     const redirect = redirectTo();
     const res = await apiRequest('/auth/login', {
@@ -16,7 +16,7 @@ export function useAuthActions() {
     });
 
     if (res.status === 200 && res.user) {
-      useUserStore.getState().setUser({
+      setUser({
         ...res.user,
         roles: Array.isArray(res.user.roles)
           ? res.user.roles
@@ -58,14 +58,15 @@ export function useAuthActions() {
   async function singleSessionLogout() {
     const redirect = redirectTo();
     const res = await apiRequest('/auth/logout', { method: 'POST' });
+    // console.log('Logout Response:', res);
     if (res.status === 200) {
       // clear user state
-      useUserStore.getState().clearUser();
-      if (redirect) {
-        router.push(`${redirect}?status=200&message=Logged out successfully`);
-      } else {
-        handleApiResponse(res);
-      }
+      clearUser();
+      console.log('User info cleared from store on logout', user);
+      router.push(`${redirect}?status=200&message=Logged out successfully`);
+    }
+    if (res.status !== 200) {
+      handleApiResponse(res);
     }
   }
 

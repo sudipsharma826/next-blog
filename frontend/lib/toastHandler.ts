@@ -17,6 +17,7 @@ import { toast } from 'sonner';
  */
 export function handleApiResponse(response: ApiResponse) {
   const { status, message } = response;
+  console.log('API Response for Toast:', { status, message });
   if (!status && !message) return;
 
   switch (status) {
