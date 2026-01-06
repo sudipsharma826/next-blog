@@ -222,7 +222,40 @@ Only the backend subdomain can access the cookie, and the frontend cannot use it
 ### IMP : In development donot set the domain cookie Options , otherise the the cookies that were been set or clear form cookies will not . Becasue: Browsers do not allow setting cookies with a domain that does not match the current host.
 ## Solution is that : set condition that isProduction ture and the production_main_url(parent domain ) is present , if present then set the domain , otherwise not .
 
+### Fixed: Donnt make the devDependices packages in root package.json (only shared packages only), install types of the cookie parser , all passort packages types inside backend
 
 
 
+## Merge Conflict Issue (2026-01-06)
 
+### Problem
+While working on authentication and proxy logic, a git merge conflict occurred in several files (such as proxy.ts, auth.service.ts, jwt.service.ts, and jwt-auth.guard.ts). This resulted in errors like:
+
+```
+Merge conflict marker encountered.
+<<<<<<< HEAD
+=======
+>>>>>>>
+```
+
+The app failed to compile and run due to these unresolved conflict markers left in the code after a merge or rebase.
+
+### Cause
+- Two branches had changes to the same lines or files.
+- Git could not automatically decide which code to keep, so it inserted conflict markers.
+- The conflict markers were not removed before running the app.
+
+### Solution
+- Opened each conflicted file and searched for `<<<<<<<`, `=======`, and `>>>>>>>`.
+- Manually chose the correct code to keep (either from HEAD, the incoming branch, or a combination).
+- Deleted all conflict markers and unwanted code.
+- Saved the files, staged, and committed the resolved files.
+- Restarted the dev server; errors were gone and the app worked as expected.
+
+### Prevention
+- Always pull and rebase before starting new work.
+- Resolve conflicts immediately and test after fixing.
+- Communicate with team members about overlapping work.
+
+**This note documents the merge conflict issue and its resolution for future reference.**
+# Auth Module Changelog & Implementation Summary
