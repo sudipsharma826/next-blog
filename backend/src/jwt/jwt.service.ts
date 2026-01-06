@@ -70,7 +70,7 @@ export class JwtService {
     });
   }
 
-  generateEmailToken(payload: { id: string; email: string }) {
+  generateEmailToken(payload: { userId: string; email: string }) {
     //console.log(`📩 Email verification token created for ${payload.email}`);
     return this.jwt.sign(payload, {
       expiresIn: '5m',

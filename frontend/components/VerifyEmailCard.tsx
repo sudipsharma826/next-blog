@@ -15,8 +15,8 @@ export default function VerifyEmailCard() {
       if (!token) {
         timeout = setTimeout(() => {
           setStatus('error');
-          setMessage('No verification token provided.');
-          router.replace('/?status=error&message=No verification token provided.');
+          setMessage('Error to verifying email');
+          router.replace('/?status=error&message=Error to verifying email');
         }, 0);
         return () => clearTimeout(timeout);
       }
@@ -51,33 +51,36 @@ export default function VerifyEmailCard() {
   }, [token, router]);
 
   return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="bg-white dark:bg-navbar-dark shadow-lg rounded-lg p-8 flex flex-col items-center w-full max-w-md transition-colors">
+    <div className="flex items-center justify-center min-h-[60vh] px-2">
+      <div
+        className="w-full max-w-md rounded-xl shadow-lg p-8 flex flex-col items-center transition-colors bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-gray-700"
+        style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.08)' }}
+      >
         {status === 'loading' && (
           <>
-            <div className="animate-spin h-10 w-10 border-4 border-blue-400 border-t-transparent rounded-full mb-4" />
-            <h2 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100">
+            <div className="animate-spin h-10 w-10 border-4 border-blue-500 dark:border-blue-400 border-t-transparent rounded-full mb-4" />
+            <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100 tracking-tight">
               Email Verification
             </h2>
-            <p className="text-gray-700 dark:text-gray-200">{message}</p>
+            <p className="text-base text-gray-700 dark:text-gray-300 text-center max-w-xs">{message}</p>
           </>
         )}
         {status === 'success' && (
           <>
-            <div className="text-green-600 text-4xl mb-4">&#10004;</div>
-            <h2 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100">
+            <div className="text-green-600 dark:text-green-400 text-4xl mb-4">&#10004;</div>
+            <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100 tracking-tight">
               Email Verified
             </h2>
-            <p className="text-gray-700 dark:text-gray-200">{message}</p>
+            <p className="text-base text-gray-700 dark:text-gray-300 text-center max-w-xs">{message}</p>
           </>
         )}
         {status === 'error' && (
           <>
-            <div className="text-red-600 text-4xl mb-4">&#10006;</div>
-            <h2 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100">
+            <div className="text-red-600 dark:text-red-400 text-4xl mb-4">&#10006;</div>
+            <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100 tracking-tight">
               Verification Failed
             </h2>
-            <p className="text-gray-700 dark:text-gray-200">{message}</p>
+            <p className="text-base text-gray-700 dark:text-gray-300 text-center max-w-xs">{message}</p>
           </>
         )}
       </div>

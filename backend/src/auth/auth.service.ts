@@ -108,7 +108,7 @@ export class AuthService {
               'Verification email already sent. Please wait before requesting again.',
             );
           }
-          const token = this.jwtService.generateEmailToken({ id: user.id, email: user.email });
+          const token = this.jwtService.generateEmailToken({ userId: user.id, email: user.email });
           const tokenHash = await bcrypt.hash(token, 10);
           await this.redisService.set(`verify:email:${user.email}`, tokenHash, 300); // 5 min
           const verifyLink = `${this.FRONTEND_URL}/verifyemail?token=${token}`;
@@ -147,7 +147,7 @@ export class AuthService {
               'Verification email already sent. Please wait before requesting again.',
             );
           }
-          const token = this.jwtService.generateEmailToken({ id: user.id, email: user.email });
+          const token = this.jwtService.generateEmailToken({ userId: user.id, email: user.email });
           const tokenHash = await bcrypt.hash(token, 10);
           await this.redisService.set(`verify:email:${user.email}`, tokenHash, 300); // 5 min
           const verifyLink = `${this.FRONTEND_URL}/verifyemail?token=${token}`;
@@ -187,7 +187,7 @@ export class AuthService {
               'Verification email already sent. Please wait before requesting again.',
             );
           }
-          const token = this.jwtService.generateEmailToken({ id: user.id, email: user.email });
+          const token = this.jwtService.generateEmailToken({ userId: user.id, email: user.email });
           const tokenHash = await bcrypt.hash(token, 10);
           await this.redisService.set(`verify:email:${user.email}`, tokenHash, 300);
           const verifyLink = `${this.FRONTEND_URL}/verifyemail?token=${token}`;
@@ -213,7 +213,7 @@ export class AuthService {
             'Verification email already sent. Please wait before requesting again.',
           );
         }
-        const token = this.jwtService.generateEmailToken({ id: user.id, email: user.email });
+        const token = this.jwtService.generateEmailToken({ userId: user.id, email: user.email });
         const tokenHash = await bcrypt.hash(token, 10);
         await this.redisService.set(`verify:email:${user.email}`, tokenHash, 300);
         const verifyLink = `${this.FRONTEND_URL}/verifyemail?token=${token}`;
